@@ -80,12 +80,12 @@ wss.on('connection', (clientSocket) => {
     // Wait until the remote socket is open before sending
     setTimeout(() => {
       if (remoteSocket.readyState === WebSocket.OPEN) {
-        tsLog(`[client #${clientId}] Data sent after 100ms delay`);
+        tsLog(`[client #${clientId}] Data sent after 1000ms delay`);
         remoteSocket.send(data);
       } else {
-        tsLog(`[client #${clientId}] Remote socket was not open after 100ms, not sending data`);
+        tsLog(`[client #${clientId}] Remote socket was not open after 1000ms, not sending data`);
       }
-    }, 100);
+    }, 1000);
   });
 
   // Handle client socket close
