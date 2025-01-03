@@ -104,11 +104,4 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
     });
 });
 
-// Finally, start the HTTP server
-const PORT = 8080;
-server.listen(PORT, () => {
-    tsLog(`WebSocket proxy listening on ws://localhost:${PORT}`);
-});
-
-
 module.exports = app;
