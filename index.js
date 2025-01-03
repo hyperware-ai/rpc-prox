@@ -88,7 +88,7 @@
    // Handle client socket close
    clientSocket.on('close', (code, reason) => {
      tsLog(`[client #${clientId}] Connection closed (code=${code}, reason=${reason})`);
-     remoteSocket.close(code, 'Client WS close');
+     remoteSocket.close(1011, 'Client WS close');
    });
  
    // Handle client socket errors
