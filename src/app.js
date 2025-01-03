@@ -1,11 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
-const routes = require('./routes.js');
+// const routes = require('./routes.js');
 const http = require('http');
 const WebSocket = require('ws');
 
-app.use(routes);
+// app.use(routes);
 /**
  * Delayed WebSocket Proxy: 
  * The handshake with the client won't complete until we confirm 
