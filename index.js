@@ -26,7 +26,7 @@
  
  // Create a local WebSocket server
  const wss = new WebSocket.Server({ port: 8080 }, () => {
-   console.log('Local WebSocket proxy server running at ws://localhost:8080');
+   console.log('(MEANINGLESS CHANGE) Local WebSocket proxy server running at ws://localhost:8080');
  });
  
  wss.on('connection', (clientSocket) => {
