@@ -1,7 +1,6 @@
 require('dotenv').config();
 const app = require("./src/app.js");
 const http = require("http");
-const http = require('http');
 const WebSocket = require('ws');
 
 const port = 8080;
