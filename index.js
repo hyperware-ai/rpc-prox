@@ -88,5 +88,5 @@ wss.on('connection', (clientSocket, req) => {
 
 // Start the HTTP server
 server.listen(8080, () => {
-  console.log('WebSocket proxy server ruining on port 8080');
+  console.log('WebSocket prox server ruining on port 8080');
 });
