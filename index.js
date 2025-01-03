@@ -1,102 +1,108 @@
 /**
- * Minimal WebSocket proxy with timestamped logging, .env config,
- * and unique client connection IDs.
- *
- * 1. Install dependencies:
- *    npm install ws dotenv
- *
- * 2. Create a .env file in the same directory with:
- *    REMOTE_URL=wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID
- *
- * 3. Run this file:
- *    node proxy.js
- *
- * 4. Connect your client to ws://localhost:8080
- *    Messages will be proxied to the REMOTE_URL specified in .env
+ * Delayed WebSocket Proxy: 
+ * The handshake with the client won't complete until we confirm 
+ * the remote server is actually connected.
  */
 
-require('dotenv').config();
-const WebSocket = require('ws');
-
-// Helpers for timestamped logs
-function tsLog(...args) {
-  console.log(`[${new Date().toISOString()}]`, ...args);
-}
-function tsError(...args) {
-  console.error(`[${new Date().toISOString()}]`, ...args);
-}
-
-// Read the remote WebSocket URL from environment variables
-const REMOTE_URL = process.env.REMOTE_URL;
-if (!REMOTE_URL) {
-  tsError('Error: REMOTE_URL not defined in .env');
-  process.exit(1);
-}
-
-// Keep track of each new client connection with a unique ID
-let connectionCounter = 0;
-
-// Create a local WebSocket server
-const wss = new WebSocket.Server({ port: 8080 }, () => {
-  tsLog('Debugging WebSocket proxy server running at ws://localhost:8080');
-});
-
-wss.on('connection', (clientSocket) => {
-  // Increment the counter and assign an ID to this connection
-  const clientId = ++connectionCounter;
-
-  tsLog(`[client #${clientId}] New client connected to proxy`);
-
-  // Create a connection to the remote server
-  const remoteSocket = new WebSocket(REMOTE_URL);
-
-  // Remote socket 'open' event
-  remoteSocket.on('open', () => {
-    tsLog(`[remote -> client #${clientId}] Connected to ${REMOTE_URL}`);
-  });
-
-  // Forward messages from the remote server to the client
-  remoteSocket.on('message', (data) => {
-    tsLog(`[remote -> client #${clientId}] ${data}`);
-    clientSocket.send(data);
-  });
-
-  // Handle remote socket close
-  remoteSocket.on('close', (code, reason) => {
-    tsLog(`[remote -> client #${clientId}] Connection closed (code=${code}, reason=${reason})`);
-    clientSocket.close(code, reason);
-  });
-
-  // Handle remote socket errors
-  remoteSocket.on('error', (err) => {
-    tsError(`[remote -> client #${clientId}] Error:`, err);
-    clientSocket.close(1011, 'Remote WS error');
-  });
-
-  // Forward messages from the client to the remote server
-  clientSocket.on('message', (data) => {
-    tsLog(`[client #${clientId} -> remote] ${data}`);
-
-    // Wait until the remote socket is open before sending
-    setTimeout(() => {
-      if (remoteSocket.readyState === WebSocket.OPEN) {
-        tsLog(`[client #${clientId}] Data sent after 1000ms delay`);
-        remoteSocket.send(data);
-      } else {
-        tsLog(`[client #${clientId}] Remote socket was not open after 1000ms, not sending data`);
-      }
-    }, 1000);
-  });
-
-  // Handle client socket close
-  clientSocket.on('close', (code, reason) => {
-    tsLog(`[client #${clientId}] Connection closed (code=${code}, reason=${reason})`);
-    remoteSocket.close(1011, 'Client WS close');
-  });
-
-  // Handle client socket errors
-  clientSocket.on('error', (err) => {
-    tsError(`[client #${clientId}] Error:`, err);
-    remoteSocket.close(1011, 'Client WS error');
-  });
-});
+ require('dotenv').config();
+ const http = require('http');
+ const WebSocket = require('ws');
+ 
+ // For timestamped logs
+ function tsLog(...args) {
+   console.log(`[${new Date().toISOString()}]`, ...args);
+ }
+ function tsError(...args) {
+   console.error(`[${new Date().toISOString()}]`, ...args);
+ }
+ 
+ // Read the remote WebSocket URL from environment variables
+ const REMOTE_URL = process.env.REMOTE_URL || 'wss://echo.websocket.org';
+ 
+ // Create an HTTP server manually
+ const server = http.createServer((req, res) => {
+   // Just respond with something if an HTTP request comes in
+   res.writeHead(200);
+   res.end('This is a WS proxy server.\n');
+ });
+ 
+ // Create a WebSocket server in "noServer" mode
+ const wss = new WebSocket.Server({ noServer: true });
+ 
+ // Our own connection counter for logging
+ let connectionCounter = 0;
+ 
+ /**
+  * "upgrade" event fires whenever a client attempts to upgrade
+  * from HTTP to WebSocket.
+  */
+ server.on('upgrade', (req, socket, head) => {
+   // Step 1: Attempt a connection to the REMOTE_URL
+   const remoteSocket = new WebSocket(REMOTE_URL);
+ 
+   remoteSocket.on('open', () => {
+     tsLog(`[remote] Connected to ${REMOTE_URL}`);
+ 
+     // Step 2: Once remote is open, upgrade the incoming client connection
+     wss.handleUpgrade(req, socket, head, (clientSocket) => {
+       // Step 3: Emit the usual 'connection' event
+       wss.emit('connection', clientSocket, req, remoteSocket);
+     });
+   });
+ 
+   remoteSocket.on('error', (err) => {
+     tsError('[remote] Failed to connect:', err);
+     // If remote fails, return an HTTP 503 to the client, then destroy
+     socket.write('HTTP/1.1 503 Service Unavailable\r\n\r\n');
+     socket.destroy();
+   });
+ });
+ 
+ // Handle new client connections on the wss
+ wss.on('connection', (clientSocket, req, remoteSocket) => {
+   const clientId = ++connectionCounter;
+   tsLog(`[client #${clientId}] Handshake complete (remote is open)`);
+ 
+   // Forward messages client -> remote
+   clientSocket.on('message', (data) => {
+     tsLog(`[client #${clientId} -> remote] ${data}`);
+     if (remoteSocket.readyState === WebSocket.OPEN) {
+       remoteSocket.send(data);
+     } else {
+       tsLog(`[client #${clientId}] Remote not open for sending.`);
+     }
+   });
+ 
+   // Forward messages remote -> client
+   remoteSocket.on('message', (data) => {
+     tsLog(`[remote -> client #${clientId}] ${data}`);
+     clientSocket.send(data);
+   });
+ 
+   // Close events
+   clientSocket.on('close', (code, reason) => {
+     tsLog(`[client #${clientId}] Closed (code=${code}, reason=${reason})`);
+     remoteSocket.close(code, reason);
+   });
+   remoteSocket.on('close', (code, reason) => {
+     tsLog(`[remote -> client #${clientId}] Closed (code=${code}, reason=${reason})`);
+     clientSocket.close(code, reason);
+   });
+ 
+   // Error events
+   clientSocket.on('error', (err) => {
+     tsError(`[client #${clientId}] Error:`, err);
+     remoteSocket.close(1011, 'Client error');
+   });
+   remoteSocket.on('error', (err) => {
+     tsError(`[remote -> client #${clientId}] Error:`, err);
+     clientSocket.close(1011, 'Remote error');
+   });
+ });
+ 
+ // Finally, start the HTTP server
+ const PORT = 8080;
+ server.listen(PORT, () => {
+   tsLog(`WebSocket proxy listening on ws://localhost:${PORT}`);
+ });
+ 
