@@ -82,11 +82,11 @@
    // Close events
    clientSocket.on('close', (code, reason) => {
      tsLog(`[client #${clientId}] Closed (code=${code}, reason=${reason})`);
-     remoteSocket.close(code, reason);
+     remoteSocket.close(1011, 'Client close');
    });
    remoteSocket.on('close', (code, reason) => {
      tsLog(`[remote -> client #${clientId}] Closed (code=${code}, reason=${reason})`);
-     clientSocket.close(code, reason);
+     clientSocket.close(1011, 'Remote close');
    });
  
    // Error events
