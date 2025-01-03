@@ -5,7 +5,8 @@ const port = 8080;
 const host = '127.0.0.1';
 const server = http.createServer(app);
 
-server.listen(port, host, () => {
+//server.listen(port, host, () => {
+server.listen(port, () => {
     console.log(`Server is running on ${port} port...`);
     console.log(process.version);
 });
