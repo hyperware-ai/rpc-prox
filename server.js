@@ -74,9 +74,15 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
     });
 
     // Forward messages remote -> client
-    remoteSocket.on('message', (data) => {
+    remoteSocket.on('message', (data, isBinary) => {
         tsLog(`[remote -> client #${clientId}] ${data}`);
-        clientSocket.send(data);
+        if (isBinary) {
+            console.log('Received binary message from upstream, converting to text...');
+            const textData = data.toString(); // Convert Buffer to string
+            clientSocket.send(textData);
+          } else {
+            clientSocket.send(data); // Forward text messages directly
+          }
     });
 
     // Close events
