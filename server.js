@@ -81,7 +81,9 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
             const textData = data.toString(); // Convert Buffer to string
             clientSocket.send(textData);
           } else {
-            clientSocket.send(data); // Forward text messages directly
+            const textData = data.toString(); // Convert Buffer to string
+            clientSocket.send(textData);
+            //clientSocket.send(data); // Forward text messages directly
           }
     });
 
