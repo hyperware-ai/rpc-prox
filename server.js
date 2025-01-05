@@ -61,47 +61,48 @@ server.on('upgrade', (req, socket, head) => {
 // Handle new client connections on the wss
 wss.on('connection', (clientSocket, req, remoteSocket) => {
     const clientId = ++connectionCounter;
-    tsLog(`[client #${clientId}] Handshake complete (remote is open)`);
+    const clientIdAndHost = `${clientId} ${req.hostname}`
+    tsLog(`[client #${clientIdAndHost}] Handshake complete (remote is open)`);
 
     // Forward messages client -> remote
     clientSocket.on('message', (data) => {
-        tsLog(`[client #${clientId} -> remote] ${data}`);
+        tsLog(`[client #${clientIdAndHost} -> remote] ${data}`);
         if (remoteSocket.readyState === WebSocket.OPEN) {
             remoteSocket.send(data);
         } else {
-            tsLog(`[client #${clientId}] Remote not open for sending.`);
+            tsLog(`[client #${clientIdAndHost}] Remote not open for sending.`);
         }
     });
 
     // Forward messages remote -> client
     remoteSocket.on('message', (data) => {
-        tsLog(`[remote -> client #${clientId}] ${data}`);
+        tsLog(`[remote -> client #${clientIdAndHost}] ${data}`);
         const textData = data.toString(); // Convert Buffer to string
         clientSocket.send(textData);
     });
 
     // Close events
     clientSocket.on('close', (code, reason) => {
-        tsLog(`[client #${clientId}] Closed (code=${code}, reason=${reason})`);
+        tsLog(`[client #${clientIdAndHost}] Closed (code=${code}, reason=${reason})`);
         if (code !== 1006) {
             remoteSocket.close(code, reason);
         } else {
-            tsLog(`[client #${clientId} -> remote] Intercepting 1006, sending 1011 to remote`);
+            tsLog(`[client #${clientIdAndHost} -> remote] Intercepting 1006, sending 1011 to remote`);
             remoteSocket.close(1011, reason);
         }
     });
     remoteSocket.on('close', (code, reason) => {
-        tsLog(`[remote -> client #${clientId}] Closed (code=${code}, reason=${reason})`);
+        tsLog(`[remote -> client #${clientIdAndHost}] Closed (code=${code}, reason=${reason})`);
         clientSocket.close(code, reason);
     });
 
     // Error events
     clientSocket.on('error', (err) => {
-        tsError(`[client #${clientId}] Error:`, err);
+        tsError(`[client #${clientIdAndHost}] Error:`, err);
         remoteSocket.close(1011, 'Client error');
     });
     remoteSocket.on('error', (err) => {
-        tsError(`[remote -> client #${clientId}] Error:`, err);
+        tsError(`[remote -> client #${clientIdAndHost}] Error:`, err);
         clientSocket.close(1011, 'Remote error');
     });
 });
