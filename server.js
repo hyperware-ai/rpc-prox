@@ -107,6 +107,6 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
 });
 
 server.listen(port, host, () => {
-    console.log(`Server is running locally on ${port} port...`);
+    console.log(`http server / ws proxy is running locally on ${port} port...`);
     console.log(process.version);
 });
