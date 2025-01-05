@@ -61,6 +61,7 @@ server.on('upgrade', (req, socket, head) => {
 // Handle new client connections on the wss
 wss.on('connection', (clientSocket, req, remoteSocket) => {
     const clientId = ++connectionCounter;
+    console.log(req);
     const clientIdAndHost = `${clientId} ${req.hostname}`
     tsLog(`[client #${clientIdAndHost}] Handshake complete (remote is open)`);
 
