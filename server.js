@@ -2,6 +2,8 @@ require('dotenv').config();
 const app = require("./src/app.js");
 const http = require("http");
 const WebSocket = require('ws');
+const NodeCache = require("node-cache");
+const cache = new NodeCache();
 
 const port = 8080;
 const host = '127.0.0.1';
@@ -19,6 +21,9 @@ function tsLog(...args) {
 function tsError(...args) {
     console.error(`[${new Date().toISOString()}]`, ...args);
 }
+
+cache.set('restrictedProxy', false);
+app.set('cache', cache);
 
 // Read the remote WebSocket URL from environment variables
 const REMOTE_URL = process.env.REMOTE_URL || 'wss://echo.websocket.org';
