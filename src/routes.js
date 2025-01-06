@@ -1,9 +1,9 @@
 const { Router } = require('express');
-const { cache } = require("./app.js");
 const routes = Router();
 
 routes.get('/default', (req, res) => {return res.status(200).json({ message: 'Router route' })});
 routes.post('/toggle-restricted-proxy', (req, res) => {
+    const cache = req.app.get('cache');
     let currentValue = cache.get("restrictedProxy");
     if (currentValue === undefined) {
         currentValue = false;
@@ -17,6 +17,7 @@ routes.post('/toggle-restricted-proxy', (req, res) => {
     return res.status(200).json({ success: true, restrictedProxy: newValue });
 });
 routes.get('/restricted-proxy-status', (req, res) => {
+    const cache = req.app.get('cache');
     const currentValue = cache.get("restrictedProxy");
     console.log({ restrictedProxy: currentValue });
     
