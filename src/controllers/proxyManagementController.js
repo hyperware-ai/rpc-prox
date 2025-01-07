@@ -31,4 +31,17 @@ const getRestrictedProxyStatus = async (req, res) => {
     }
 }
 
-module.exports = { toggleRestrictedProxy, getRestrictedProxyStatus };
+const getUserConnectionsStatus = async (req, res) => {
+    try {
+        const cache = req.app.get('cache');
+        const userConnections = cache.get("userConnections");
+        console.log(userConnections);
+
+        return res.status(200).json({ userConnections });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error });
+    }
+}
+
+module.exports = { toggleRestrictedProxy, getRestrictedProxyStatus, getUserConnectionsStatus };

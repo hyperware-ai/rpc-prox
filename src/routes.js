@@ -7,5 +7,6 @@ routes.get('/default', (req, res) => {return res.status(200).json({ message: 'Ro
 
 routes.post('/toggle-restricted-proxy', proxyManagementController.toggleRestrictedProxy);
 routes.get('/restricted-proxy-status', proxyManagementController.getRestrictedProxyStatus);
+routes.get('/user-connections-status', proxyManagementController.getUserConnectionsStatus);
 
 module.exports = routes;

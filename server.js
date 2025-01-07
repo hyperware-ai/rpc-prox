@@ -23,6 +23,7 @@ function tsError(...args) {
 }
 
 cache.set('restrictedProxy', false);
+cache.set('userConnections', new Map());
 app.set('cache', cache);
 
 // Read the remote WebSocket URL from environment variables
@@ -67,8 +68,19 @@ server.on('upgrade', (req, socket, head) => {
 wss.on('connection', (clientSocket, req, remoteSocket) => {
     const clientId = ++connectionCounter;
     //console.log(req);
-    const clientIdAndHost = `${clientId} ${req.headers.host}`
+    const clientIdAndHost = `${clientId} ${req.headers.host}`;
+    const proxyUser = req.headers.host.split('.')[0];
     tsLog(`[client #${clientIdAndHost}] Handshake complete (remote is open)`);
+    tsLog(`proxyUser: ${proxyUser}`);
+
+    const userConnections = cache.get('userConnections');
+    if (userConnections.has(proxyUser)) {
+        userConnections.set(proxyUser, userConnections.get(proxyUser) + 1);
+        tsLog(`proxyUser: ${proxyUser} updated userConnections entry to ${userConnections.get(proxyUser) + 1}`);
+    } else {
+        userConnections.set(proxyUser, 1);
+        tsLog(`Added new userConnections entry for proxyUser: ${proxyUser}`);
+    }
 
     // Forward messages client -> remote
     clientSocket.on('message', (data) => {
