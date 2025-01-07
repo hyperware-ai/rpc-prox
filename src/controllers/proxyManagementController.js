@@ -37,7 +37,7 @@ const getUserConnectionsStatus = async (req, res) => {
         const userConnections = cache.get("userConnections");
         console.log(userConnections);
 
-        return res.status(200).json({ userConnections });
+        return res.status(200).json(userConnections);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
