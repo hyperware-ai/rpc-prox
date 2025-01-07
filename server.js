@@ -81,6 +81,7 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
         userConnections.set(proxyUser, 1);
         tsLog(`Added new userConnections entry for proxyUser: ${proxyUser}`);
     }
+    cache.set('userConnections', userConnections);
 
     // Forward messages client -> remote
     clientSocket.on('message', (data) => {
