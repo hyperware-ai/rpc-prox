@@ -5,7 +5,7 @@ const proxyManagementController = require('./controllers/proxyManagementControll
 
 routes.get('/default', (req, res) => {return res.status(200).json({ message: 'Router route' })});
 
-routes.post('/toggle-restricted-proxy', proxyManagementController.toggleRestrictedProxy);
+routes.post('/set-restricted-proxy', proxyManagementController.setRestrictedProxy);
 routes.get('/restricted-proxy-status', proxyManagementController.getRestrictedProxyStatus);
 routes.get('/user-connections-status', proxyManagementController.getUserConnectionsStatus);
 

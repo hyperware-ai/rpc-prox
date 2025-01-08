@@ -1,17 +1,16 @@
-const toggleRestrictedProxy = async (req, res) => {
+const setRestrictedProxy = async (req, res) => {
     try {
-        const cache = req.app.get('cache');
-        let currentValue = cache.get("restrictedProxy");
-        if (currentValue === undefined) {
-            currentValue = false;
-            cache.set("restrictedProxy", currentValue);
+        const { restrictedProxy } = req.body;
+        if (restrictedProxy === undefined) {
+            return res.status(400).json({ message: "Missing body param(s), need restrictedProxy" });
         }
+        if (restrictedProxy !== true && restrictedProxy !== false) {
+            return res.status(400).json({ message: "restrictedProxy must be either true or false" });
+        }
+        cache.set("restrictedProxy", restrictedProxy);
+        console.log(`restrictedProxy set to ${restrictedProxy}`);
 
-        const newValue = !currentValue;
-        cache.set("restrictedProxy", newValue);
-        console.log({ success: true, restrictedProxy: newValue });
-
-        return res.status(200).json({ success: true, restrictedProxy: newValue });
+        return res.status(200).json({ restrictedProxy });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
@@ -44,4 +43,4 @@ const getUserConnectionsStatus = async (req, res) => {
     }
 }
 
-module.exports = { toggleRestrictedProxy, getRestrictedProxyStatus, getUserConnectionsStatus };
+module.exports = { setRestrictedProxy, getRestrictedProxyStatus, getUserConnectionsStatus };
