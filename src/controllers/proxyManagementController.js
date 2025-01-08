@@ -1,5 +1,7 @@
 const setRestrictedProxy = async (req, res) => {
     try {
+        console.log(req);
+        console.log(req.body);
         const { restrictedProxy } = req.body;
         if (restrictedProxy === undefined) {
             return res.status(400).json({ message: "Missing body param(s), need restrictedProxy" });
@@ -7,6 +9,7 @@ const setRestrictedProxy = async (req, res) => {
         if (restrictedProxy !== true && restrictedProxy !== false) {
             return res.status(400).json({ message: "restrictedProxy must be either true or false" });
         }
+        const cache = req.app.get('cache');
         cache.set("restrictedProxy", restrictedProxy);
         console.log(`restrictedProxy set to ${restrictedProxy}`);
 
