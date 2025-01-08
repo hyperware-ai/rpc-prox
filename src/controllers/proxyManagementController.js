@@ -35,9 +35,9 @@ const getUserConnectionsStatus = async (req, res) => {
     try {
         const cache = req.app.get('cache');
         const userConnections = cache.get("userConnections");
-        console.log(userConnections);
+        console.log(Object.fromEntries(userConnections));
 
-        return res.status(200).json(userConnections);
+        return res.status(200).json(Object.fromEntries(userConnections));
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
