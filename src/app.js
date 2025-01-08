@@ -4,6 +4,7 @@ const app = express();
 const routes = require('./routes.js');
 
 app.use(routes);
+app.use(express.json());
 app.set('trust proxy', true);
 
 module.exports = app;
