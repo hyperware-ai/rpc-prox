@@ -1,7 +1,5 @@
 const setRestrictedProxy = async (req, res) => {
     try {
-        console.log(req);
-        console.log(req.body);
         const { restrictedProxy } = req.body;
         if (restrictedProxy === undefined) {
             return res.status(400).json({ message: "Missing body param(s), need restrictedProxy" });
@@ -38,6 +36,8 @@ const getUserConnectionsStatus = async (req, res) => {
         const cache = req.app.get('cache');
         const userConnections = cache.get("userConnections");
         console.log(Object.fromEntries(userConnections));
+
+        if (req.path.includes('clear')) cache.set('userConnections', new Map());
 
         return res.status(200).json(Object.fromEntries(userConnections));
     } catch (error) {
