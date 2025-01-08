@@ -37,7 +37,7 @@ const getUserConnectionsStatus = async (req, res) => {
         const userConnections = cache.get("userConnections");
         console.log(Object.fromEntries(userConnections));
 
-        if (req.path.includes('clear')) cache.set('userConnections', new Map());
+        if (req.path.includes('reset')) cache.set('userConnections', new Map());
 
         return res.status(200).json(Object.fromEntries(userConnections));
     } catch (error) {
