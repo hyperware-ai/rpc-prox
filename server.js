@@ -23,7 +23,6 @@ function tsError(...args) {
 }
 
 cache.set('restrictedProxy', false);
-cache.set('userConnections', new Map());
 app.set('cache', cache);
 
 // Read the remote WebSocket URL from environment variables
@@ -73,15 +72,26 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
     tsLog(`[client #${clientIdAndHost}] Handshake complete (remote is open)`);
     tsLog(`proxyUser: ${proxyUser}`);
 
-    const userConnections = cache.get('userConnections');
-    if (userConnections.has(proxyUser)) {
-        userConnections.set(proxyUser, userConnections.get(proxyUser) + 1);
-        tsLog(`proxyUser: ${proxyUser} updated userConnections entry to ${userConnections.get(proxyUser) + 1}`);
+    const lastHyphenIndex = proxyUser.lastIndexOf('-');
+    if (lastHyphenIndex === -1) {
+        tsLog(`BAD subdomain format: "${proxyUser}"`);
     } else {
-        userConnections.set(proxyUser, 1);
-        tsLog(`Added new userConnections entry for proxyUser: ${proxyUser}`);
+        const node = proxyUser.substring(0, lastHyphenIndex);
+        const shortcode = proxyUser.substring(lastHyphenIndex + 1);
+        if (!cache.has(`${shortcode}-userConnections`)) {
+            tsLog(`No userConnections cache for client shortcode: "${shortcode}", creating it`);
+            cache.set(`${shortcode}-userConnections`, new Map());
+        }
+        const userConnections = cache.get(`${shortcode}-userConnections`);
+        if (userConnections.has(node)) {
+            userConnections.set(node, userConnections.get(proxyUser) + 1);
+            tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node) + 1}`);
+        } else {
+            userConnections.set(node, 1);
+            tsLog(`Added new ${shortcode}-userConnections entry for node: ${node}`);
+        }
+        cache.set(`${shortcode}-userConnections`, userConnections);
     }
-    cache.set('userConnections', userConnections);
 
     // Forward messages client -> remote
     clientSocket.on('message', (data) => {

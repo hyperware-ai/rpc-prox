@@ -13,7 +13,7 @@ routes.get('/default', (req, res) => {return res.status(200).json({ message: 'Ro
 
 routes.post('/monitor/set-restricted-proxy', localonly, proxyManagementController.setRestrictedProxy);
 routes.get('/restricted-proxy-status', middlewareSecret, proxyManagementController.getRestrictedProxyStatus);
-routes.get('/user-connections', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
-routes.put('/user-connections-with-reset', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
+routes.get('/user-connections/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
+routes.put('/user-connections-with-reset/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
 
 module.exports = routes;

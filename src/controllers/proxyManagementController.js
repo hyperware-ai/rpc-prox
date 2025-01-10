@@ -33,11 +33,12 @@ const getRestrictedProxyStatus = async (req, res) => {
 
 const getUserConnectionsStatus = async (req, res) => {
     try {
+        const { shortcode } = req.params;
         const cache = req.app.get('cache');
-        const userConnections = cache.get("userConnections");
+        const userConnections = cache.get(`${shortcode}-userConnections`);
         console.log(Object.fromEntries(userConnections));
 
-        if (req.path.includes('reset')) cache.set('userConnections', new Map());
+        if (req.path.includes('reset')) cache.set(`${shortcode}-userConnections`, new Map());
 
         return res.status(200).json(Object.fromEntries(userConnections));
     } catch (error) {
