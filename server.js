@@ -85,7 +85,7 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
         const userConnections = cache.get(`${shortcode}-userConnections`);
         if (userConnections.has(node)) {
             userConnections.set(node, userConnections.get(node) + 1);
-            tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node) + 1}`);
+            tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node)}`);
         } else {
             userConnections.set(node, 1);
             tsLog(`Added new ${shortcode}-userConnections entry for node: ${node}`);
