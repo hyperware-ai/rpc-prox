@@ -35,6 +35,9 @@ const getUserConnectionsStatus = async (req, res) => {
     try {
         const { shortcode } = req.params;
         const cache = req.app.get('cache');
+        if (!cache.has(`${shortcode}-userConnections`)) {
+            return res.status(404).json({ message: `No ${shortcode}-userConnections cache exists` });
+        }
         const userConnections = cache.get(`${shortcode}-userConnections`);
         console.log(Object.fromEntries(userConnections));
 
