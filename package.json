@@ -4,7 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "http": "^0.0.1-security",
+    "node-cache": "^5.1.2",
     "ws": "^8.18.0"
   },
   "scripts": {
