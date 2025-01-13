@@ -1,0 +1,25 @@
+name: RPC proxy CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: build and deploy proxy to SFO3
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ vars.SSH_PROX_HOST_SFO3 }}
+        username: ${{ vars.SSH_USER }}
+        key: ${{ secrets.SSH_PROX_ED25519KEY }}
+        port: ${{ vars.SSH_PORT }}
+        command_timeout: 60m
+        script: |
+          cd ~/rpc-prox
+          git pull origin main
+          yarn
+          ~/restart_prox.sh

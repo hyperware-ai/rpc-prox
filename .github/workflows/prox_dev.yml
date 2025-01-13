@@ -10,13 +10,26 @@ jobs:
     timeout-minutes: 60
 
     steps:
-    - name: build and deploy proxy
+    - name: build and deploy proxy to FRA1
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ vars.SSH_PROX_HOST }}
-        username: ${{ vars.SSH_USER }}
-        key: ${{ secrets.SSH_PROX_ED25519KEY }}
-        port: ${{ vars.SSH_PORT }}
+        host: ${{ vars.SSH_PROX_HOST_TEST_FRA1 }}
+        username: ${{ vars.SSH_USER_TEST }}
+        key: ${{ secrets.SSH_PROX_ED25519KEY_TEST }}
+        port: ${{ vars.SSH_PORT_TEST }}
+        command_timeout: 60m
+        script: |
+          cd ~/rpc-prox
+          git pull origin dev
+          yarn
+          ~/restart_prox.sh
+    - name: build and deploy proxy to SFO3
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ vars.SSH_PROX_HOST_TEST_SFO3 }}
+        username: ${{ vars.SSH_USER_TEST }}
+        key: ${{ secrets.SSH_PROX_ED25519KEY_TEST }}
+        port: ${{ vars.SSH_PORT_TEST }}
         command_timeout: 60m
         script: |
           cd ~/rpc-prox
