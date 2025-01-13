@@ -98,6 +98,19 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
         tsLog(`[client #${clientIdAndHost} -> remote] ${data}`);
         if (remoteSocket.readyState === WebSocket.OPEN) {
             remoteSocket.send(data);
+
+            const lastHyphenIndex = proxyUser.lastIndexOf('-');
+            if (lastHyphenIndex === -1) {
+                tsLog(`BAD subdomain format: "${proxyUser}"`);
+            } else {
+                const node = proxyUser.substring(0, lastHyphenIndex);
+                const shortcode = proxyUser.substring(lastHyphenIndex + 1);
+                const userConnections = cache.get(`${shortcode}-userConnections`);
+                userConnections.set(node, userConnections.get(node) + 1);
+                tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node)}`);
+                cache.set(`${shortcode}-userConnections`, userConnections);
+            }
+
         } else {
             tsLog(`[client #${clientIdAndHost}] Remote not open for sending.`);
         }
@@ -108,6 +121,19 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
         tsLog(`[remote -> client #${clientIdAndHost}] ${data}`);
         const textData = data.toString(); // Convert Buffer to string
         clientSocket.send(textData);
+
+        const lastHyphenIndex = proxyUser.lastIndexOf('-');
+        if (lastHyphenIndex === -1) {
+            tsLog(`BAD subdomain format: "${proxyUser}"`);
+        } else {
+            const node = proxyUser.substring(0, lastHyphenIndex);
+            const shortcode = proxyUser.substring(lastHyphenIndex + 1);
+            const userConnections = cache.get(`${shortcode}-userConnections`);
+            userConnections.set(node, userConnections.get(node) + 1);
+            tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node)}`);
+            cache.set(`${shortcode}-userConnections`, userConnections);
+        }
+        
     });
 
     // Close events
