@@ -106,8 +106,13 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
                 const node = proxyUser.substring(0, lastHyphenIndex);
                 const shortcode = proxyUser.substring(lastHyphenIndex + 1);
                 const userConnections = cache.get(`${shortcode}-userConnections`);
-                userConnections.set(node, userConnections.get(node) + 1);
-                tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node)}`);
+                if (userConnections.has(node)) {
+                    userConnections.set(node, userConnections.get(node) + 1);
+                    tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node)}`);
+                } else {
+                    userConnections.set(node, 1);
+                    tsLog(`Added new ${shortcode}-userConnections entry for node: ${node}`);
+                }
                 cache.set(`${shortcode}-userConnections`, userConnections);
             }
 
@@ -129,11 +134,16 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
             const node = proxyUser.substring(0, lastHyphenIndex);
             const shortcode = proxyUser.substring(lastHyphenIndex + 1);
             const userConnections = cache.get(`${shortcode}-userConnections`);
-            userConnections.set(node, userConnections.get(node) + 1);
-            tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node)}`);
+            if (userConnections.has(node)) {
+                userConnections.set(node, userConnections.get(node) + 1);
+                tsLog(`node: ${node} updated userConnections entry to ${userConnections.get(node)}`);
+            } else {
+                userConnections.set(node, 1);
+                tsLog(`Added new ${shortcode}-userConnections entry for node: ${node}`);
+            }
             cache.set(`${shortcode}-userConnections`, userConnections);
         }
-        
+
     });
 
     // Close events
