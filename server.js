@@ -42,6 +42,9 @@ let connectionCounter = 0;
  * from HTTP to WebSocket.
  */
 server.on('upgrade', (req, socket, head) => {
+    // Step 0: Check headers
+    console.log(req.headers);
+
     // Step 1: Attempt a connection to the REMOTE_URL
     const remoteSocket = new WebSocket(REMOTE_URL);
 
