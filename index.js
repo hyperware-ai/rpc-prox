@@ -103,6 +103,6 @@
  // Finally, start the HTTP server
  const PORT = 8080;
  server.listen(PORT, () => {
-   tsLog(`WebSocket proxy listening on ws://localhost:${PORT}`);
+   tsLog(`WebSocket proxy now listening on ws://localhost:${PORT}`);
  });
  
