@@ -50,4 +50,13 @@ const getUserConnectionsStatus = async (req, res) => {
     }
 }
 
-module.exports = { setRestrictedProxy, getRestrictedProxyStatus, getUserConnectionsStatus };
+const triggerReboot = async (req, res) => {
+    try {
+        return res.status(200).json({ message: "reboot underway" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "error in controller" });
+    }
+}
+
+module.exports = { setRestrictedProxy, getRestrictedProxyStatus, getUserConnectionsStatus, triggerReboot };
