@@ -44,14 +44,19 @@ let connectionCounter = 0;
 server.on('upgrade', (req, socket, head) => {
     // Step 0: Check headers
     console.log(req.headers);
-    //const cache = req.app.get('cache');
-    //const currentValue = cache.get("restrictedProxy");
+    try {
+        const testcache = app.get('cache');
+        const currentValue = testcache.get("restrictedProxy");
 
-    /*if (currentValue) {
-        console.log("ENFORCING proxy restrictions")
-    } else {
-        console.log("Proxy restrictions are NOT ENFORCED")
-    }*/
+        if (currentValue) {
+            console.log("ENFORCING proxy restrictions")
+        } else {
+            console.log("Proxy restrictions are NOT ENFORCED")
+        }
+    } catch (error) {
+        console.log(error);
+        //return res.status(500).json({ error });
+    }
 
     // Step 1: Attempt a connection to the REMOTE_URL
     const remoteSocket = new WebSocket(REMOTE_URL);
