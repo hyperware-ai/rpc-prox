@@ -61,12 +61,12 @@ const addToBlacklist = async (req, res) => {
             blacklist.set(blacklistEntry, blacklist.get(blacklistEntry) + 1);
             tsLog(`node: ${blacklistEntry} updated blacklist entry to ${blacklist.get(blacklistEntry)}`);
         } else {
-            blacklist.set(node, 1);
+            blacklist.set(blacklistEntry, 1);
             tsLog(`Added new ${blacklistEntry}-blacklist entry for node: ${blacklistEntry}`);
         }
         cache.set(`${shortcode}-blacklist`, blacklist);
 
-        return res.status(200).json({ "nothing":"nothing" });
+        return res.status(200).json(Object.fromEntries(blacklistEntries));
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
