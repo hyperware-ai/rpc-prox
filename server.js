@@ -49,7 +49,7 @@ server.on('upgrade', (req, socket, head) => {
         const currentValue = testcache.get("restrictedProxy");
 
         if (currentValue) {
-            console.log("ENFORCING proxy restrictions")
+            tsLog("ENFORCING proxy restrictions")
             const proxyUser = req.headers.host.split('.')[0];
             tsLog(`proxyUser: ${proxyUser}`);
         
@@ -67,7 +67,8 @@ server.on('upgrade', (req, socket, head) => {
                     if (blacklist.has(node)) {
                         //blacklist.set(node, blacklist.get(node) + 1);
                         tsLog(`node: ${node} is BLACKLISTED`);
-                        //AND THEN ACTUALLY KICK THEM
+                        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                        socket.destroy();
                     } else {
                         //blacklist.set(node, 1);
                         tsLog(`node: ${node} is NOT blacklisted`);
@@ -75,7 +76,7 @@ server.on('upgrade', (req, socket, head) => {
                 }
             }            
         } else {
-            console.log("Proxy restrictions are NOT ENFORCED")
+            tsLog("Proxy restrictions are NOT ENFORCED")
         }
     } catch (error) {
         console.log(error);
