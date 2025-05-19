@@ -1,3 +1,11 @@
+// For timestamped logs
+function tsLog(...args) {
+    console.log(`[${new Date().toISOString()}]`, ...args);
+}
+function tsError(...args) {
+    console.error(`[${new Date().toISOString()}]`, ...args);
+}
+
 const setRestrictedProxy = async (req, res) => {
     try {
         const { restrictedProxy } = req.body;
