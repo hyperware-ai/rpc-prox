@@ -33,13 +33,30 @@ const getRestrictedProxyStatus = async (req, res) => {
 
 const addToBlacklist = async (req, res) => {
     try {
+        const { shortcode } = req.params;
+        if (shortcode === undefined) {
+            return res.status(400).json({ message: "Missing path param, need :shortcode" });
+        }
         const { blacklistEntry } = req.body;
         if (blacklistEntry === undefined) {
-            return res.status(400).json({ message: "Missing body param(s), need blacklistEntry" });
+            return res.status(400).json({ message: "Missing body param, need blacklistEntry" });
         }
-        //const cache = req.app.get('cache');
+        const cache = req.app.get('cache');
         //cache.set("restrictedProxy", restrictedProxy);
         //console.log(`restrictedProxy set to ${restrictedProxy}`);
+        if (!cache.has(`${shortcode}-blacklist`)) {
+            tsLog(`No blacklist cache for client shortcode: "${shortcode}", creating it`);
+            cache.set(`${shortcode}-blacklist`, new Map());
+        }
+        const blacklist = cache.get(`${shortcode}-blacklist`);
+        if (blacklist.has(blacklistEntry)) {
+            blacklist.set(blacklistEntry, blacklist.get(blacklistEntry) + 1);
+            tsLog(`node: ${blacklistEntry} updated blacklist entry to ${blacklist.get(blacklistEntry)}`);
+        } else {
+            blacklist.set(node, 1);
+            tsLog(`Added new ${blacklistEntry}-blacklist entry for node: ${blacklistEntry}`);
+        }
+        cache.set(`${shortcode}-blacklist`, blacklist);
 
         return res.status(200).json({ "nothing":"nothing" });
     } catch (error) {
@@ -50,11 +67,17 @@ const addToBlacklist = async (req, res) => {
 
 const getBlacklist = async (req, res) => {
     try {
+        const { shortcode } = req.params;
         const cache = req.app.get('cache');
-        const currentValue = cache.get("blacklist");
-        console.log({ blacklist: currentValue });
+        if (!cache.has(`${shortcode}-blacklist`)) {
+            return res.status(404).json({ message: `No ${shortcode}-blacklist cache exists` });
+        }
+        const blacklistEntries = cache.get(`${shortcode}-blacklist`);
+        console.log(Object.fromEntries(blacklistEntries));
 
-        return res.status(200).json({ blacklist: currentValue });
+        if (req.path.includes('reset')) cache.set(`${shortcode}-blacklist`, new Map());
+
+        return res.status(200).json(Object.fromEntries(blacklistEntries));
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
