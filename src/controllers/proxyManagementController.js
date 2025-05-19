@@ -66,7 +66,7 @@ const addToBlacklist = async (req, res) => {
         }
         cache.set(`${shortcode}-blacklist`, blacklist);
 
-        return res.status(200).json(Object.fromEntries(blacklistEntries));
+        return res.status(200).json(Object.fromEntries(blacklist));
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
