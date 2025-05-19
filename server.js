@@ -65,7 +65,13 @@ server.on('upgrade', (req, socket, head) => {
                 } else { 
                     const blacklist = cache.get(`${shortcode}-blacklist`);
                     if (blacklist.has(node)) {
-                        //blacklist.set(node, blacklist.get(node) + 1);
+                        tsLog(req.headers.authorization)
+                        tsLog(`Bearer ${blacklist.get(node)}`)
+                        if (req.headers.authorization === `Bearer ${blacklist.get(node)}`) {
+                            tsLog(`node: ${node} has a MATCHING Authorization header`);
+                        } else {
+                            tsLog(`node: ${node} has a NON-matching Authorization header`);
+                        }
                         tsLog(`node: ${node} is BLACKLISTED`);
                         socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
                         socket.destroy();
