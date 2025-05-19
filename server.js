@@ -50,6 +50,29 @@ server.on('upgrade', (req, socket, head) => {
 
         if (currentValue) {
             console.log("ENFORCING proxy restrictions")
+            const proxyUser = req.headers.host.split('.')[0];
+            tsLog(`proxyUser: ${proxyUser}`);
+        
+            const lastHyphenIndex = proxyUser.lastIndexOf('-');
+            if (lastHyphenIndex === -1) {
+                tsLog(`BAD subdomain format: "${proxyUser}"`);
+            } else {
+                const node = proxyUser.substring(0, lastHyphenIndex);
+                const shortcode = proxyUser.substring(lastHyphenIndex + 1);
+                if (!cache.has(`${shortcode}-blacklist`)) {
+                    tsLog(`No blacklist cache for client shortcode: "${shortcode}"`);
+                    //cache.set(`${shortcode}-blacklist`, new Map());
+                }
+                const blacklist = cache.get(`${shortcode}-blacklist`);
+                if (blacklist.has(node)) {
+                    //blacklist.set(node, blacklist.get(node) + 1);
+                    tsLog(`node: ${node} is BLACKLISTED`);
+                    //AND THEN ACTUALLY KICK THEM
+                } else {
+                    //blacklist.set(node, 1);
+                    tsLog(`node: ${node} is NOT blacklisted`);
+                }
+            }            
         } else {
             console.log("Proxy restrictions are NOT ENFORCED")
         }
