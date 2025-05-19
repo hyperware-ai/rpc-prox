@@ -62,15 +62,16 @@ server.on('upgrade', (req, socket, head) => {
                 if (!cache.has(`${shortcode}-blacklist`)) {
                     tsLog(`No blacklist cache for client shortcode: "${shortcode}"`);
                     //cache.set(`${shortcode}-blacklist`, new Map());
-                }
-                const blacklist = cache.get(`${shortcode}-blacklist`);
-                if (blacklist.has(node)) {
-                    //blacklist.set(node, blacklist.get(node) + 1);
-                    tsLog(`node: ${node} is BLACKLISTED`);
-                    //AND THEN ACTUALLY KICK THEM
-                } else {
-                    //blacklist.set(node, 1);
-                    tsLog(`node: ${node} is NOT blacklisted`);
+                } else { 
+                    const blacklist = cache.get(`${shortcode}-blacklist`);
+                    if (blacklist.has(node)) {
+                        //blacklist.set(node, blacklist.get(node) + 1);
+                        tsLog(`node: ${node} is BLACKLISTED`);
+                        //AND THEN ACTUALLY KICK THEM
+                    } else {
+                        //blacklist.set(node, 1);
+                        tsLog(`node: ${node} is NOT blacklisted`);
+                    }
                 }
             }            
         } else {
