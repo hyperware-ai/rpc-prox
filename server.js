@@ -69,6 +69,7 @@ server.on('upgrade', (req, socket, head) => {
                         tsLog(`node: ${node} is BLACKLISTED`);
                         socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
                         socket.destroy();
+                        return;
                     } else {
                         //blacklist.set(node, 1);
                         tsLog(`node: ${node} is NOT blacklisted`);
