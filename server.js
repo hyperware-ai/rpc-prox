@@ -23,6 +23,7 @@ function tsError(...args) {
 }
 
 cache.set('restrictedProxy', false);
+cache.set('blacklist', []);
 app.set('cache', cache);
 
 // Read the remote WebSocket URL from environment variables

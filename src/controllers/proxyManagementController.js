@@ -31,6 +31,36 @@ const getRestrictedProxyStatus = async (req, res) => {
     }
 }
 
+const addToBlacklist = async (req, res) => {
+    try {
+        const { blacklistEntry } = req.body;
+        if (blacklistEntry === undefined) {
+            return res.status(400).json({ message: "Missing body param(s), need blacklistEntry" });
+        }
+        //const cache = req.app.get('cache');
+        //cache.set("restrictedProxy", restrictedProxy);
+        //console.log(`restrictedProxy set to ${restrictedProxy}`);
+
+        return res.status(200).json({ "nothing":"nothing" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error });
+    }
+}
+
+const getBlacklist = async (req, res) => {
+    try {
+        const cache = req.app.get('cache');
+        const currentValue = cache.get("blacklist");
+        console.log({ blacklist: currentValue });
+
+        return res.status(200).json({ blacklist: currentValue });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error });
+    }
+}
+
 const getUserConnectionsStatus = async (req, res) => {
     try {
         const { shortcode } = req.params;
@@ -59,4 +89,9 @@ const triggerReboot = async (req, res) => {
     }
 }
 
-module.exports = { setRestrictedProxy, getRestrictedProxyStatus, getUserConnectionsStatus, triggerReboot };
+module.exports = { setRestrictedProxy, 
+    getRestrictedProxyStatus, 
+    addToBlacklist,
+    getBlacklist,
+    getUserConnectionsStatus, 
+    triggerReboot };

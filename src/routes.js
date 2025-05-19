@@ -14,6 +14,10 @@ routes.get('/default', (req, res) => {return res.status(200).json({ message: 'Ro
 routes.post('/monitor/set-restricted-proxy', localonly, proxyManagementController.setRestrictedProxy);
 routes.get('/restricted-proxy-status', middlewareSecret, proxyManagementController.getRestrictedProxyStatus);
 routes.get('/monitor/restricted-proxy-status', localonly, proxyManagementController.getRestrictedProxyStatus);
+
+routes.post('/monitor/add-to-blacklist', localonly, proxyManagementController.addToBlacklist);
+routes.get('/monitor/get-blacklist', localonly, proxyManagementController.getBlacklist);
+
 routes.get('/user-connections/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
 routes.put('/user-connections-with-reset/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
 
