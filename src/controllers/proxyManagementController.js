@@ -39,53 +39,88 @@ const getRestrictedProxyStatus = async (req, res) => {
     }
 }
 
-const addToBlacklist = async (req, res) => {
+const addToWhitelist = async (req, res) => {
     try {
         const { shortcode } = req.params;
         if (shortcode === undefined) {
             return res.status(400).json({ message: "Missing path param, need :shortcode" });
         }
-        const { blacklistEntry } = req.body;
-        if (blacklistEntry === undefined) {
-            return res.status(400).json({ message: "Missing body param, need blacklistEntry" });
+        const { whitelistEntry, whitelistKey } = req.body;
+        if (whitelistEntry === undefined || whitelistKey === undefined || whitelistEntry === "" || whitelistKey === "") {
+            return res.status(400).json({ message: "Missing body param(s), need whitelistEntry and whitelistKey" });
         }
         const cache = req.app.get('cache');
         //cache.set("restrictedProxy", restrictedProxy);
         //console.log(`restrictedProxy set to ${restrictedProxy}`);
-        if (!cache.has(`${shortcode}-blacklist`)) {
-            tsLog(`No blacklist cache for client shortcode: "${shortcode}", creating it`);
-            cache.set(`${shortcode}-blacklist`, new Map());
+        if (!cache.has(`${shortcode}-whitelist`)) {
+            tsLog(`No whitelist cache for client shortcode: "${shortcode}", creating it`);
+            cache.set(`${shortcode}-whitelist`, new Map());
         }
-        const blacklist = cache.get(`${shortcode}-blacklist`);
-        if (blacklist.has(blacklistEntry)) {
-            blacklist.set(blacklistEntry, blacklist.get(blacklistEntry) + 1);
-            tsLog(`node: ${blacklistEntry} updated blacklist entry to ${blacklist.get(blacklistEntry)}`);
+        const whitelist = cache.get(`${shortcode}-whitelist`);
+        if (whitelist.has(whitelistEntry)) {
+            whitelist.set(whitelistEntry, whitelistKey);
+            tsLog(`node: ${whitelistEntry} updated whitelist entry to ${whitelistKey}`);
         } else {
-            blacklist.set(blacklistEntry, 1);
-            tsLog(`Added new ${blacklistEntry}-blacklist entry for node: ${blacklistEntry}`);
+            whitelist.set(whitelistEntry, whitelistKey);
+            tsLog(`Added new ${whitelistEntry}-whitelist entry of ${whitelistKey} for node: ${whitelistEntry}`);
         }
-        cache.set(`${shortcode}-blacklist`, blacklist);
+        cache.set(`${shortcode}-whitelist`, whitelist);
 
-        return res.status(200).json(Object.fromEntries(blacklist));
+        return res.status(200).json(Object.fromEntries(whitelist));
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
     }
 }
 
-const getBlacklist = async (req, res) => {
+const removeFromWhitelist = async (req, res) => {
+    try {
+        const { shortcode } = req.params;
+        if (shortcode === undefined) {
+            return res.status(400).json({ message: "Missing path param, need :shortcode" });
+        }
+        const { whitelistEntry } = req.body;
+        if (whitelistEntry === undefined) {
+            return res.status(400).json({ message: "Missing body param, need whitelistEntry" });
+        }
+        const cache = req.app.get('cache');
+        //cache.set("restrictedProxy", restrictedProxy);
+        //console.log(`restrictedProxy set to ${restrictedProxy}`);
+        if (!cache.has(`${shortcode}-whitelist`)) {
+            tsLog(`No whitelist cache for client shortcode: ${shortcode}`);
+            return res.status(400).json({ message: `No whitelist cache for client shortcode: ${shortcode}` });
+        }
+        const whitelist = cache.get(`${shortcode}-whitelist`);
+        if (whitelist.has(whitelistEntry)) {
+            whitelist.delete(whitelistEntry);
+            tsLog(`node: ${whitelistEntry} deleted whitelist entry`);
+        } else {
+            whitelist.set(whitelistEntry, 1);
+            tsLog(`No ${whitelistEntry}-whitelist entry for node: ${whitelistEntry}`);
+            return res.status(400).json({ message: `No ${whitelistEntry}-whitelist entry for node: ${whitelistEntry}` });            
+        }
+        cache.set(`${shortcode}-whitelist`, whitelist);
+
+        return res.status(200).json({ message: `node: ${whitelistEntry} deleted whitelist entry`});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error });
+    }
+}
+
+const getWhitelist = async (req, res) => {
     try {
         const { shortcode } = req.params;
         const cache = req.app.get('cache');
-        if (!cache.has(`${shortcode}-blacklist`)) {
-            return res.status(404).json({ message: `No ${shortcode}-blacklist cache exists` });
+        if (!cache.has(`${shortcode}-whitelist`)) {
+            return res.status(404).json({ message: `No ${shortcode}-whitelist cache exists` });
         }
-        const blacklistEntries = cache.get(`${shortcode}-blacklist`);
-        console.log(Object.fromEntries(blacklistEntries));
+        const whitelistEntries = cache.get(`${shortcode}-whitelist`);
+        console.log(Object.fromEntries(whitelistEntries));
 
-        if (req.path.includes('reset')) cache.set(`${shortcode}-blacklist`, new Map());
+        if (req.path.includes('reset')) cache.set(`${shortcode}-whitelist`, new Map());
 
-        return res.status(200).json(Object.fromEntries(blacklistEntries));
+        return res.status(200).json(Object.fromEntries(whitelistEntries));
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });
@@ -122,7 +157,8 @@ const triggerReboot = async (req, res) => {
 
 module.exports = { setRestrictedProxy, 
     getRestrictedProxyStatus, 
-    addToBlacklist,
-    getBlacklist,
+    addToWhitelist,
+    removeFromWhitelist,
+    getWhitelist,
     getUserConnectionsStatus, 
     triggerReboot };

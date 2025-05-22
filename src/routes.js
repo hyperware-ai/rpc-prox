@@ -15,9 +15,12 @@ routes.post('/monitor/set-restricted-proxy', localonly, proxyManagementControlle
 routes.get('/restricted-proxy-status', middlewareSecret, proxyManagementController.getRestrictedProxyStatus);
 routes.get('/monitor/restricted-proxy-status', localonly, proxyManagementController.getRestrictedProxyStatus);
 
-routes.post('/monitor/add-to-blacklist/:shortcode', localonly, proxyManagementController.addToBlacklist);
-routes.get('/monitor/get-blacklist/:shortcode', localonly, proxyManagementController.getBlacklist);
-routes.get('/monitor/reset-blacklist/:shortcode', localonly, proxyManagementController.getBlacklist);
+routes.post('/add-to-whitelist/:shortcode', middlewareSecret, proxyManagementController.addToWhitelist);
+routes.post('/monitor/add-to-whitelist/:shortcode', localonly, proxyManagementController.addToWhitelist);
+routes.delete('/remove-from-whitelist/:shortcode', middlewareSecret, proxyManagementController.removeFromWhitelist);
+routes.delete('/monitor/remove-from-whitelist/:shortcode', localonly, proxyManagementController.removeFromWhitelist);
+routes.get('/monitor/get-whitelist/:shortcode', localonly, proxyManagementController.getWhitelist);
+routes.get('/monitor/reset-whitelist/:shortcode', localonly, proxyManagementController.getWhitelist);
 
 routes.get('/user-connections/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
 routes.put('/user-connections-with-reset/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);

@@ -59,26 +59,37 @@ server.on('upgrade', (req, socket, head) => {
             } else {
                 const node = proxyUser.substring(0, lastHyphenIndex);
                 const shortcode = proxyUser.substring(lastHyphenIndex + 1);
-                if (!cache.has(`${shortcode}-blacklist`)) {
-                    tsLog(`No blacklist cache for client shortcode: "${shortcode}"`);
-                    //cache.set(`${shortcode}-blacklist`, new Map());
+                if (!cache.has(`${shortcode}-whitelist`)) {
+                    tsLog(`No whitelist cache for client shortcode: "${shortcode}"`);
+                    /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                    socket.destroy();
+                    return;*/
                 } else { 
-                    const blacklist = cache.get(`${shortcode}-blacklist`);
-                    if (blacklist.has(node)) {
+                    const whitelist = cache.get(`${shortcode}-whitelist`);
+                    if (whitelist.has(node)) {
+                        tsLog(`node: ${node} is WHITELISTED, checking whitelist entry and Authorization header`);
                         tsLog(req.headers.authorization)
-                        tsLog(`Bearer ${blacklist.get(node)}`)
-                        if (req.headers.authorization === `Bearer ${blacklist.get(node)}`) {
+                        tsLog(`${whitelist.get(node)}`)
+                        if (`${whitelist.get(node)}` === "allowed") {
+                            tsLog(`node: ${node} has an ALLOWED whitelist entry`);
+                        } else if (`${whitelist.get(node)}` === "banned") {
+                            tsLog(`node: ${node} has a BANNED whitelist entry`);
+                            /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                            socket.destroy();
+                            return;*/
+                        } else if (req.headers.authorization === `Bearer ${whitelist.get(node)}`) {
                             tsLog(`node: ${node} has a MATCHING Authorization header`);
                         } else {
                             tsLog(`node: ${node} has a NON-matching Authorization header`);
+                            /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                            socket.destroy();
+                            return;*/
                         }
-                        tsLog(`node: ${node} is BLACKLISTED`);
-                        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
-                        socket.destroy();
-                        return;
                     } else {
-                        //blacklist.set(node, 1);
-                        tsLog(`node: ${node} is NOT blacklisted`);
+                        tsLog(`node: ${node} is NOT whitelisted`);
+                        /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                        socket.destroy();
+                        return;*/
                     }
                 }
             }            
