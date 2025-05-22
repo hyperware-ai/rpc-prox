@@ -217,7 +217,12 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
     });
     remoteSocket.on('close', (code, reason) => {
         tsLog(`[remote -> client #${clientIdAndHost}] Closed (code=${code}, reason=${reason})`);
-        clientSocket.close(code, reason);
+        if (code !== 1006) {
+            clientSocket.close(code, reason);
+        } else {
+            tsLog(`[client #${clientIdAndHost} -> remote] Intercepting 1006, sending 1011 to remote`);
+            clientSocket.close(1011, reason);
+        }
     });
 
     // Error events
