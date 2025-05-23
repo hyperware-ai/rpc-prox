@@ -119,7 +119,7 @@ const getWhitelist = async (req, res) => {
             return res.status(404).json({ message: `No ${shortcode}-whitelist cache exists` });
         }
         const whitelistEntries = cache.get(`${shortcode}-whitelist`);
-        console.log(Object.fromEntries(whitelistEntries));
+        //console.log(Object.fromEntries(whitelistEntries));
 
         if (req.path.includes('reset')) cache.set(`${shortcode}-whitelist`, new Map());
 
