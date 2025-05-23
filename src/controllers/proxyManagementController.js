@@ -1,4 +1,5 @@
 require('dotenv').config();
+const shell = require('shelljs');
 
 // For timestamped logs
 function tsLog(...args) {
