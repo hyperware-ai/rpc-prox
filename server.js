@@ -249,7 +249,7 @@ try {
         console.log(shortcodeArray[i])
         cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
         const whitelist = cache.get(`${shortcodeArray[i]}-whitelist`);
-        const whitelistedNodes = await shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
+        const whitelistedNodes = shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
         const nodeArray = JSON.parse(whitelistedNodes.stdout)
         for (let j = 0; j < nodeArray.length; j++) {
             console.log(nodeArray[j].node)
