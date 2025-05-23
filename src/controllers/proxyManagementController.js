@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // For timestamped logs
 function tsLog(...args) {
     console.log(`[${new Date().toISOString()}]`, ...args);
@@ -155,8 +157,22 @@ const triggerReboot = async (req, res) => {
     }
 }
 
+const prepopulateWhitelist = async (req, res) => {
+    try {
+        shortcodeArray = process.env.ASSOCIATED_SHORTCODES
+        for (let i = 0; i < shortcodeArray.length; i++) {
+            console.log(shortcodeArray[0])
+        }
+        return res.status(200).json({ message: "reboot underway" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "error in controller" });
+    }
+}
+
 module.exports = { setRestrictedProxy, 
-    getRestrictedProxyStatus, 
+    getRestrictedProxyStatus,
+    prepopulateWhitelist, 
     addToWhitelist,
     removeFromWhitelist,
     getWhitelist,
