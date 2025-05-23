@@ -159,7 +159,7 @@ const triggerReboot = async (req, res) => {
 
 const prepopulateWhitelist = async (req, res) => {
     try {
-        shortcodeArray = process.env.ASSOCIATED_SHORTCODES
+        shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
         for (let i = 0; i < shortcodeArray.length; i++) {
             console.log(shortcodeArray[0])
         }
