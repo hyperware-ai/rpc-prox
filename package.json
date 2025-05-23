@@ -8,6 +8,7 @@
     "express": "^4.21.2",
     "http": "^0.0.1-security",
     "node-cache": "^5.1.2",
+    "shelljs": "^0.10.0",
     "ws": "^8.18.0"
   },
   "scripts": {
