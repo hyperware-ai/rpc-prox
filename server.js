@@ -62,9 +62,9 @@ server.on('upgrade', (req, socket, head) => {
                 const shortcode = proxyUser.substring(lastHyphenIndex + 1);
                 if (!cache.has(`${shortcode}-whitelist`)) {
                     tsLog(`No whitelist cache for client shortcode: "${shortcode}"`);
-                    /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                    socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
                     socket.destroy();
-                    return;*/
+                    return;
                 } else { 
                     const whitelist = cache.get(`${shortcode}-whitelist`);
                     if (whitelist.has(node)) {
@@ -75,22 +75,22 @@ server.on('upgrade', (req, socket, head) => {
                             tsLog(`node: ${node} has an ALLOWED whitelist entry`);
                         } else if (`${whitelist.get(node)}` === "banned") {
                             tsLog(`node: ${node} has a BANNED whitelist entry`);
-                            /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                            socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
                             socket.destroy();
-                            return;*/
+                            return;
                         } else if (req.headers.authorization === `Bearer ${whitelist.get(node)}`) {
                             tsLog(`node: ${node} has a MATCHING Authorization header`);
                         } else {
                             tsLog(`node: ${node} has a NON-matching Authorization header`);
-                            /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                            socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
                             socket.destroy();
-                            return;*/
+                            return;
                         }
                     } else {
                         tsLog(`node: ${node} is NOT whitelisted`);
-                        /*socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
                         socket.destroy();
-                        return;*/
+                        return;
                     }
                 }
             }            
