@@ -1,4 +1,5 @@
 require('dotenv').config();
+const shell = require('shelljs');
 const app = require("./src/app.js");
 const http = require("http");
 const WebSocket = require('ws');
@@ -240,3 +241,28 @@ server.listen(port, host, () => {
     console.log(`http server / ws proxy is running locally on ${port} port...`);
     console.log(process.version);
 });
+
+try {
+    shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
+    const cache = app.get('cache');
+    for (let i = 0; i < shortcodeArray.length; i++) {
+        console.log(shortcodeArray[i])
+        cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
+        const whitelist = cache.get(`${shortcodeArray[i]}-whitelist`);
+        const whitelistedNodes = await shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
+        const nodeArray = JSON.parse(whitelistedNodes.stdout)
+        for (let j = 0; j < nodeArray.length; j++) {
+            console.log(nodeArray[j].node)
+            if (nodeArray[j].rpc_token === null) {
+                console.log("allowed");
+                whitelist.set(nodeArray[j].node, "allowed");
+            } else {
+                console.log(nodeArray[j].rpc_token)
+                whitelist.set(nodeArray[j].node, nodeArray[j].rpc_token);
+            }
+        }
+        cache.set(`${shortcodeArray[i]}-whitelist`, whitelist);
+    }
+} catch (error) {
+    console.log(error);
+}
