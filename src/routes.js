@@ -14,6 +14,7 @@ routes.get('/default', (req, res) => {return res.status(200).json({ message: 'Ro
 routes.post('/monitor/set-restricted-proxy', localonly, proxyManagementController.setRestrictedProxy);
 routes.get('/restricted-proxy-status', middlewareSecret, proxyManagementController.getRestrictedProxyStatus);
 routes.get('/monitor/restricted-proxy-status', localonly, proxyManagementController.getRestrictedProxyStatus);
+routes.post('/monitor/prepopulate-whitelist', localonly, proxyManagementController.prepopulateWhitelist);
 
 routes.post('/add-to-whitelist/:shortcode', middlewareSecret, proxyManagementController.addToWhitelist);
 routes.post('/monitor/add-to-whitelist/:shortcode', localonly, proxyManagementController.addToWhitelist);
