@@ -263,6 +263,8 @@ try {
         }
         cache.set(`${shortcodeArray[i]}-whitelist`, whitelist);
     }
+    cache.set("restrictedProxy", true);
+    console.log(`restrictedProxy set to true`)
 } catch (error) {
     console.log(error);
 }
