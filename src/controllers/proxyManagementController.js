@@ -161,7 +161,17 @@ const prepopulateWhitelist = async (req, res) => {
     try {
         shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
         for (let i = 0; i < shortcodeArray.length; i++) {
-            console.log(shortcodeArray[0])
+            console.log(shortcodeArray[i])
+            const whitelistedNodes = await shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
+            const nodeArray = JSON.parse(whitelistedNodes.stdout)
+            for (let j = 0; j < nodeArray.length; j++) {
+                console.log(nodeArray[j].node)
+                if (nodeArray[j].rpc_token === null) {
+                    console.log("allowed");
+                } else {
+                    console.log(nodeArray[j].rpc_token)
+                }
+            }
         }
         return res.status(200).json({ message: "reboot underway" });
     } catch (error) {
