@@ -161,20 +161,26 @@ const triggerReboot = async (req, res) => {
 const prepopulateWhitelist = async (req, res) => {
     try {
         shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
+        const cache = req.app.get('cache');
         for (let i = 0; i < shortcodeArray.length; i++) {
             console.log(shortcodeArray[i])
+            cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
+            const whitelist = cache.get(`${shortcodeArray[i]}-whitelist`);
             const whitelistedNodes = await shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
             const nodeArray = JSON.parse(whitelistedNodes.stdout)
             for (let j = 0; j < nodeArray.length; j++) {
                 console.log(nodeArray[j].node)
                 if (nodeArray[j].rpc_token === null) {
                     console.log("allowed");
+                    whitelist.set(nodeArray[j].node, "allowed");
                 } else {
                     console.log(nodeArray[j].rpc_token)
+                    whitelist.set(nodeArray[j].node, nodeArray[j].rpc_token);
                 }
             }
+            cache.set(`${shortcodeArray[i]}-whitelist`, whitelist);
         }
-        return res.status(200).json({ message: "reboot underway" });
+        return res.status(200).json({ message: "prepopulation complete" });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "error in controller" });
