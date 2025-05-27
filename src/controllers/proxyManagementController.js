@@ -19,9 +19,39 @@ const setRestrictedProxy = async (req, res) => {
             return res.status(400).json({ message: "restrictedProxy must be either true or false" });
         }
         const cache = req.app.get('cache');
-        cache.set("restrictedProxy", restrictedProxy);
-        console.log(`restrictedProxy set to ${restrictedProxy}`);
-
+        if (restrictedProxy === true) {
+            console.log("Building whitelists in advance of enforcing restricted proxy.")
+            shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
+            for (let i = 0; i < shortcodeArray.length; i++) {
+                console.log(shortcodeArray[i])
+                cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
+                const whitelist = cache.get(`${shortcodeArray[i]}-whitelist`);
+                const whitelistedNodes = await shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
+                const nodeArray = JSON.parse(whitelistedNodes.stdout)
+                for (let j = 0; j < nodeArray.length; j++) {
+                    console.log(nodeArray[j].node)
+                    if (nodeArray[j].rpc_token === null) {
+                        console.log("allowed");
+                        whitelist.set(nodeArray[j].node, "allowed");
+                    } else {
+                        console.log(nodeArray[j].rpc_token)
+                        whitelist.set(nodeArray[j].node, nodeArray[j].rpc_token);
+                    }
+                }
+                cache.set(`${shortcodeArray[i]}-whitelist`, whitelist);
+            }    
+            cache.set("restrictedProxy", restrictedProxy);
+            console.log(`restrictedProxy set to ${restrictedProxy}`);
+        } else {
+            cache.set("restrictedProxy", restrictedProxy);
+            console.log(`restrictedProxy set to ${restrictedProxy}`);
+            console.log("Clearing whitelists after relaxing restricted proxy.")
+            shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
+            for (let i = 0; i < shortcodeArray.length; i++) {
+                console.log(shortcodeArray[i])
+                cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
+            } 
+        }
         return res.status(200).json({ restrictedProxy });
     } catch (error) {
         console.log(error);

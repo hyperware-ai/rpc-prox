@@ -243,28 +243,33 @@ server.listen(port, host, () => {
 });
 
 try {
-    shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
-    const cache = app.get('cache');
-    for (let i = 0; i < shortcodeArray.length; i++) {
-        console.log(shortcodeArray[i])
-        cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
-        const whitelist = cache.get(`${shortcodeArray[i]}-whitelist`);
-        const whitelistedNodes = shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
-        const nodeArray = JSON.parse(whitelistedNodes.stdout)
-        for (let j = 0; j < nodeArray.length; j++) {
-            console.log(nodeArray[j].node)
-            if (nodeArray[j].rpc_token === null) {
-                console.log("allowed");
-                whitelist.set(nodeArray[j].node, "allowed");
-            } else {
-                console.log(nodeArray[j].rpc_token)
-                whitelist.set(nodeArray[j].node, nodeArray[j].rpc_token);
+    if (process.env.ENFORCE_AT_START === "TRUE") {
+        console.log(`ENFORCING proxy restrictions at startup`)
+        shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
+        const cache = app.get('cache');
+        for (let i = 0; i < shortcodeArray.length; i++) {
+            console.log(shortcodeArray[i])
+            cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
+            const whitelist = cache.get(`${shortcodeArray[i]}-whitelist`);
+            const whitelistedNodes = shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
+            const nodeArray = JSON.parse(whitelistedNodes.stdout)
+            for (let j = 0; j < nodeArray.length; j++) {
+                console.log(nodeArray[j].node)
+                if (nodeArray[j].rpc_token === null) {
+                    console.log("allowed");
+                    whitelist.set(nodeArray[j].node, "allowed");
+                } else {
+                    console.log(nodeArray[j].rpc_token)
+                    whitelist.set(nodeArray[j].node, nodeArray[j].rpc_token);
+                }
             }
+            cache.set(`${shortcodeArray[i]}-whitelist`, whitelist);
         }
-        cache.set(`${shortcodeArray[i]}-whitelist`, whitelist);
+        cache.set("restrictedProxy", true);
+        console.log(`restrictedProxy set to true`)
+    } else {
+        console.log(`NOT enforcing proxy restrictions at startup`)
     }
-    cache.set("restrictedProxy", true);
-    console.log(`restrictedProxy set to true`)
 } catch (error) {
     console.log(error);
 }
