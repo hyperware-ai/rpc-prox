@@ -1,4 +1,5 @@
 require('dotenv').config();
+const shell = require('shelljs');
 const app = require("./src/app.js");
 const http = require("http");
 const WebSocket = require('ws');
@@ -44,6 +45,62 @@ let connectionCounter = 0;
 server.on('upgrade', (req, socket, head) => {
     // Step 0: Check headers
     console.log(req.headers);
+    try {
+        const testcache = app.get('cache');
+        const currentValue = testcache.get("restrictedProxy");
+
+        if (currentValue) {
+            tsLog("ENFORCING proxy restrictions")
+            const proxyUser = req.headers.host.split('.')[0];
+            tsLog(`proxyUser: ${proxyUser}`);
+        
+            const lastHyphenIndex = proxyUser.lastIndexOf('-');
+            if (lastHyphenIndex === -1) {
+                tsLog(`BAD subdomain format: "${proxyUser}"`);
+            } else {
+                const node = proxyUser.substring(0, lastHyphenIndex);
+                const shortcode = proxyUser.substring(lastHyphenIndex + 1);
+                if (!cache.has(`${shortcode}-whitelist`)) {
+                    tsLog(`No whitelist cache for client shortcode: "${shortcode}"`);
+                    socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                    socket.destroy();
+                    return;
+                } else { 
+                    const whitelist = cache.get(`${shortcode}-whitelist`);
+                    if (whitelist.has(node)) {
+                        tsLog(`node: ${node} is WHITELISTED, checking whitelist entry and Authorization header`);
+                        tsLog(req.headers.authorization)
+                        tsLog(`${whitelist.get(node)}`)
+                        if (`${whitelist.get(node)}` === "allowed") {
+                            tsLog(`node: ${node} has an ALLOWED whitelist entry`);
+                        } else if (`${whitelist.get(node)}` === "banned") {
+                            tsLog(`node: ${node} has a BANNED whitelist entry`);
+                            socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                            socket.destroy();
+                            return;
+                        } else if (req.headers.authorization === `Bearer ${whitelist.get(node)}`) {
+                            tsLog(`node: ${node} has a MATCHING Authorization header`);
+                        } else {
+                            tsLog(`node: ${node} has a NON-matching Authorization header`);
+                            socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                            socket.destroy();
+                            return;
+                        }
+                    } else {
+                        tsLog(`node: ${node} is NOT whitelisted`);
+                        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                        socket.destroy();
+                        return;
+                    }
+                }
+            }            
+        } else {
+            tsLog("Proxy restrictions are NOT ENFORCED")
+        }
+    } catch (error) {
+        console.log(error);
+        //return res.status(500).json({ error });
+    }
 
     // Step 1: Attempt a connection to the REMOTE_URL
     const remoteSocket = new WebSocket(REMOTE_URL);
@@ -161,7 +218,12 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
     });
     remoteSocket.on('close', (code, reason) => {
         tsLog(`[remote -> client #${clientIdAndHost}] Closed (code=${code}, reason=${reason})`);
-        clientSocket.close(code, reason);
+        if (code !== 1006) {
+            clientSocket.close(code, reason);
+        } else {
+            tsLog(`[client #${clientIdAndHost} -> remote] Intercepting 1006, sending 1011 to remote`);
+            clientSocket.close(1011, reason);
+        }
     });
 
     // Error events
@@ -179,3 +241,35 @@ server.listen(port, host, () => {
     console.log(`http server / ws proxy is running locally on ${port} port...`);
     console.log(process.version);
 });
+
+try {
+    if (process.env.ENFORCE_AT_START === "TRUE") {
+        console.log(`ENFORCING proxy restrictions at startup`)
+        shortcodeArray = JSON.parse(process.env.ASSOCIATED_SHORTCODES)
+        const cache = app.get('cache');
+        for (let i = 0; i < shortcodeArray.length; i++) {
+            console.log(shortcodeArray[i])
+            cache.set(`${shortcodeArray[i]}-whitelist`, new Map());
+            const whitelist = cache.get(`${shortcodeArray[i]}-whitelist`);
+            const whitelistedNodes = shell.exec(`curl ${process.env.BACKEND_URL}/get-ship-tokens/${shortcodeArray[i]}`, { silent: true });
+            const nodeArray = JSON.parse(whitelistedNodes.stdout)
+            for (let j = 0; j < nodeArray.length; j++) {
+                console.log(nodeArray[j].node)
+                if (nodeArray[j].rpc_token === null) {
+                    console.log("allowed");
+                    whitelist.set(nodeArray[j].node, "allowed");
+                } else {
+                    console.log(nodeArray[j].rpc_token)
+                    whitelist.set(nodeArray[j].node, nodeArray[j].rpc_token);
+                }
+            }
+            cache.set(`${shortcodeArray[i]}-whitelist`, whitelist);
+        }
+        cache.set("restrictedProxy", true);
+        console.log(`restrictedProxy set to true`)
+    } else {
+        console.log(`NOT enforcing proxy restrictions at startup`)
+    }
+} catch (error) {
+    console.log(error);
+}
