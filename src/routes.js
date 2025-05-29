@@ -25,6 +25,8 @@ routes.get('/monitor/reset-whitelist/:shortcode', localonly, proxyManagementCont
 
 routes.get('/monitor/get-errors', localonly, proxyManagementController.getErrors);
 routes.get('/get-errors', middlewareSecret, proxyManagementController.getErrors);
+routes.get('/monitor/get-errors-with-reset', localonly, proxyManagementController.getErrors);
+routes.get('/get-errors-with-reset', middlewareSecret, proxyManagementController.getErrors);
 
 routes.get('/user-connections/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
 routes.put('/user-connections-with-reset/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
