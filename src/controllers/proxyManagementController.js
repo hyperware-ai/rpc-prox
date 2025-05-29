@@ -145,12 +145,13 @@ const getErrors = async (req, res) => {
     try {
         const cache = req.app.get('cache');
         if (!cache.has(`errors`)) {
-            return res.status(404).json({ message: `No errors cache exists` });
+            console.log("non-existent errors cache");
+            return res.status(200).json({ errorCount: 0 });
         }
         const errorCount = cache.get(`errors`);
 
         if (req.path.includes('reset')) cache.set(`errors`, 0);
-
+        console.log("existing errors cache");
         return res.status(200).json({errorCount});
     } catch (err) {
         console.log(err);
