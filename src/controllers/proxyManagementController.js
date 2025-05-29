@@ -141,6 +141,24 @@ const removeFromWhitelist = async (req, res) => {
     }
 }
 
+const getErrors = async (req, res) => {
+    try {
+        const cache = req.app.get('cache');
+        let errorCount = 0
+        if (!cache.has(`errors`)) {
+            console.log("non-existent errors cache");
+        } else {
+            console.log("existing errors cache");
+            errorCount = cache.get(`errors`);
+        }   
+        if (req.path.includes('reset')) cache.set(`errors`, 0);
+        return res.status(200).json({errorCount});
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ err });
+    }
+}
+
 const getWhitelist = async (req, res) => {
     try {
         const { shortcode } = req.params;
@@ -222,6 +240,7 @@ module.exports = { setRestrictedProxy,
     prepopulateWhitelist, 
     addToWhitelist,
     removeFromWhitelist,
+    getErrors,
     getWhitelist,
     getUserConnectionsStatus, 
     triggerReboot };

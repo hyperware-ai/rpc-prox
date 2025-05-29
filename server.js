@@ -107,7 +107,6 @@ server.on('upgrade', (req, socket, head) => {
 
     remoteSocket.on('open', () => {
         tsLog(`[remote] Connected to ${REMOTE_URL}`);
-
         // Step 2: Once remote is open, upgrade the incoming client connection
         wss.handleUpgrade(req, socket, head, (clientSocket) => {
             // Step 3: Emit the usual 'connection' event
@@ -117,6 +116,14 @@ server.on('upgrade', (req, socket, head) => {
 
     remoteSocket.on('error', (err) => {
         tsError('[remote] Failed to connect:', err);
+        if (!cache.has(`errors`)) {
+            tsLog(`No errors cache, creating it`);
+            cache.set(`errors`, 1);
+        } else {
+            const errorCount = cache.get(`errors`);
+            cache.set(`errors`, errorCount + 1);
+            tsLog(`updated errors to ${errorCount}`);
+        }
         // If remote fails, return an HTTP 503 to the client, then destroy
         socket.write('HTTP/1.1 503 Service Unavailable\r\n\r\n');
         socket.destroy();
