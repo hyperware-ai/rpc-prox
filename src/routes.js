@@ -21,12 +21,12 @@ routes.post('/monitor/add-to-whitelist/:shortcode', localonly, proxyManagementCo
 routes.delete('/remove-from-whitelist/:shortcode', middlewareSecret, proxyManagementController.removeFromWhitelist);
 routes.delete('/monitor/remove-from-whitelist/:shortcode', localonly, proxyManagementController.removeFromWhitelist);
 routes.get('/monitor/get-whitelist/:shortcode', localonly, proxyManagementController.getWhitelist);
-routes.get('/monitor/reset-whitelist/:shortcode', localonly, proxyManagementController.getWhitelist);
+routes.put('/monitor/reset-whitelist/:shortcode', localonly, proxyManagementController.getWhitelist);
 
 routes.get('/monitor/get-errors', localonly, proxyManagementController.getErrors);
 routes.get('/get-errors', middlewareSecret, proxyManagementController.getErrors);
-routes.get('/monitor/get-errors-with-reset', localonly, proxyManagementController.getErrors);
-routes.get('/get-errors-with-reset', middlewareSecret, proxyManagementController.getErrors);
+routes.put('/monitor/get-errors-with-reset', localonly, proxyManagementController.getErrors);
+routes.put('/get-errors-with-reset', middlewareSecret, proxyManagementController.getErrors);
 
 routes.get('/user-connections/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
 routes.put('/user-connections-with-reset/:shortcode', middlewareSecret, proxyManagementController.getUserConnectionsStatus);
