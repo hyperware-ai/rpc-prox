@@ -275,7 +275,9 @@ server.listen(port, host, () => {
     console.log(`http server / ws proxy is running locally on ${port} port...`);
     console.log(process.version);
     console.log('[ws-proxy] bootstrapping heartbeat');
-    startHeartbeat();
+    const hbIntervalSec = Number(process.env.HEARTBEAT_INTERVAL);
+    const hbIntervalMs = Number.isFinite(hbIntervalSec) && hbIntervalSec > 0 ? hbIntervalSec * 1000 : 10000;
+    startHeartbeat(hbIntervalMs);
 });
 
 function closeAllTunnelsOnProviderChange() {

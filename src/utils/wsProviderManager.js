@@ -48,6 +48,7 @@ function advanceProvider(reason) {
     activeProviderIndex = (activeProviderIndex + 1) % providerConfigs.length;
     const next = getActiveConfig();
     console.log(`[ws-rpc] Switching provider from ${prev?.name} to ${next?.name}${reason ? ` (${reason})` : ''}`);
+    heartbeatStreak = 0;
     notifyProviderChange(prev?.name, next?.name, reason);
     return next;
 }
@@ -73,11 +74,14 @@ function setActiveProvider(identifier, reason = 'manual override') {
     activeProviderIndex = targetIndex;
     const current = getActiveProviderName();
     console.log(`[ws-rpc] Provider manually set from ${previous} to ${current} (${reason})`);
+    heartbeatStreak = 0;
     notifyProviderChange(previous, current, reason);
     return { ok: true, changed: previous !== current, provider: current };
 }
 
 let heartbeatTimer = null;
+let heartbeatTotal = 0;
+let heartbeatStreak = 0;
 const changeListeners = new Set();
 
 function notifyProviderChange(previous, current, reason) {
@@ -131,11 +135,16 @@ function startHeartbeat(intervalMs = 10000, timeoutMs = 4000) {
         return;
     }
     const tick = async () => {
-        console.log(`[ws-rpc] Heartbeat check for ${getActiveProviderName()}`);
         try {
             await heartbeatOnce(timeoutMs);
+            heartbeatTotal += 1;
+            heartbeatStreak += 1;
+            if (heartbeatStreak % 10 === 0) {
+                console.log(`[ws-rpc] ${heartbeatStreak} successful heartbeats for ${getActiveProviderName()} (${heartbeatTotal} total since restart)`);
+            }
         } catch (err) {
             console.log(`[ws-rpc] Heartbeat failed on ${getActiveProviderName()}: ${err?.message || err}`);
+            heartbeatStreak = 0;
             advanceProvider('heartbeat failure');
         }
     };
