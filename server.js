@@ -5,6 +5,12 @@ const http = require("http");
 const WebSocket = require('ws');
 const NodeCache = require("node-cache");
 const cache = new NodeCache();
+const {
+    getActiveProviderUrl,
+    getActiveProviderName,
+    advanceProvider,
+    startHeartbeat,
+} = require('./src/utils/wsProviderManager');
 
 const port = 8080;
 const host = '127.0.0.1';
@@ -25,9 +31,6 @@ function tsError(...args) {
 
 cache.set('restrictedProxy', false);
 app.set('cache', cache);
-
-// Read the remote WebSocket URL from environment variables
-const REMOTE_URL = process.env.REMOTE_URL || 'wss://echo.websocket.org';
 
 // Create an HTTP server manually
 const server = http.createServer(app);
@@ -102,11 +105,21 @@ server.on('upgrade', (req, socket, head) => {
         //return res.status(500).json({ error });
     }
 
-    // Step 1: Attempt a connection to the REMOTE_URL
-    const remoteSocket = new WebSocket(REMOTE_URL);
+    let remoteUrl;
+    try {
+        remoteUrl = getActiveProviderUrl();
+    } catch (error) {
+        tsError('[remote] No provider URL available:', error);
+        socket.write('HTTP/1.1 503 Service Unavailable\r\n\r\n');
+        socket.destroy();
+        return;
+    }
+
+    // Step 1: Attempt a connection to the active provider URL
+    const remoteSocket = new WebSocket(remoteUrl);
 
     remoteSocket.on('open', () => {
-        tsLog(`[remote] Connected to ${REMOTE_URL}`);
+        tsLog(`[remote] Connected to ${remoteUrl} (${getActiveProviderName()})`);
         // Step 2: Once remote is open, upgrade the incoming client connection
         wss.handleUpgrade(req, socket, head, (clientSocket) => {
             // Step 3: Emit the usual 'connection' event
@@ -116,6 +129,7 @@ server.on('upgrade', (req, socket, head) => {
 
     remoteSocket.on('error', (err) => {
         tsError('[remote] Failed to connect:', err);
+        advanceProvider('remote connection error');
         if (!cache.has(`errors`)) {
             tsLog(`No errors cache, creating it`);
             cache.set(`errors`, 1);
@@ -247,6 +261,8 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
 server.listen(port, host, () => {
     console.log(`http server / ws proxy is running locally on ${port} port...`);
     console.log(process.version);
+    console.log('[ws-proxy] bootstrapping heartbeat');
+    startHeartbeat();
 });
 
 try {
