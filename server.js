@@ -10,6 +10,7 @@ const {
     getActiveProviderName,
     advanceProvider,
     startHeartbeat,
+    onProviderChange,
 } = require('./src/utils/wsProviderManager');
 
 const port = 8080;
@@ -40,6 +41,7 @@ const wss = new WebSocket.Server({ noServer: true });
 
 // Our own connection counter for logging
 let connectionCounter = 0;
+const activeTunnels = new Set();
 
 /**
  * "upgrade" event fires whenever a client attempts to upgrade
@@ -106,8 +108,10 @@ server.on('upgrade', (req, socket, head) => {
     }
 
     let remoteUrl;
+    let remoteName;
     try {
         remoteUrl = getActiveProviderUrl();
+        remoteName = getActiveProviderName();
     } catch (error) {
         tsError('[remote] No provider URL available:', error);
         socket.write('HTTP/1.1 503 Service Unavailable\r\n\r\n');
@@ -119,11 +123,11 @@ server.on('upgrade', (req, socket, head) => {
     const remoteSocket = new WebSocket(remoteUrl);
 
     remoteSocket.on('open', () => {
-        tsLog(`[remote] Connected to ${remoteUrl} (${getActiveProviderName()})`);
+        tsLog(`[remote(${remoteName})] Connected to ${remoteUrl}`);
         // Step 2: Once remote is open, upgrade the incoming client connection
         wss.handleUpgrade(req, socket, head, (clientSocket) => {
             // Step 3: Emit the usual 'connection' event
-            wss.emit('connection', clientSocket, req, remoteSocket);
+            wss.emit('connection', clientSocket, req, remoteSocket, remoteName);
         });
     });
 
@@ -145,7 +149,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 // Handle new client connections on the wss
-wss.on('connection', (clientSocket, req, remoteSocket) => {
+wss.on('connection', (clientSocket, req, remoteSocket, remoteName) => {
     const clientId = ++connectionCounter;
     //console.log(req);
     const clientIdAndHost = `${clientId} ${req.headers.host}`;
@@ -174,9 +178,16 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
         cache.set(`${shortcode}-userConnections`, userConnections);
     }
 
+    const tunnel = { clientSocket, remoteSocket, remoteName, id: clientIdAndHost };
+    activeTunnels.add(tunnel);
+
+    const removeTunnel = () => {
+        activeTunnels.delete(tunnel);
+    };
+
     // Forward messages client -> remote
     clientSocket.on('message', (data) => {
-        tsLog(`[client #${clientIdAndHost} -> remote] ${data}`);
+        tsLog(`[client #${clientIdAndHost} -> remote(${remoteName})] ${data}`);
         if (remoteSocket.readyState === WebSocket.OPEN) {
             remoteSocket.send(data);
 
@@ -204,7 +215,7 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
 
     // Forward messages remote -> client
     remoteSocket.on('message', (data) => {
-        tsLog(`[remote -> client #${clientIdAndHost}] ${data}`);
+        tsLog(`[remote(${remoteName}) -> client #${clientIdAndHost}] ${data}`);
         const textData = data.toString(); // Convert Buffer to string
         clientSocket.send(textData);
 
@@ -230,6 +241,7 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
     // Close events
     clientSocket.on('close', (code, reason) => {
         tsLog(`[client #${clientIdAndHost}] Closed (code=${code}, reason=${reason})`);
+        removeTunnel();
         if (code !== 1006) {
             remoteSocket.close(code, reason);
         } else {
@@ -238,7 +250,8 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
         }
     });
     remoteSocket.on('close', (code, reason) => {
-        tsLog(`[remote -> client #${clientIdAndHost}] Closed (code=${code}, reason=${reason})`);
+        tsLog(`[remote(${remoteName}) -> client #${clientIdAndHost}] Closed (code=${code}, reason=${reason})`);
+        removeTunnel();
         if (code !== 1006) {
             clientSocket.close(code, reason);
         } else {
@@ -253,7 +266,7 @@ wss.on('connection', (clientSocket, req, remoteSocket) => {
         remoteSocket.close(1011, 'Client error');
     });
     remoteSocket.on('error', (err) => {
-        tsError(`[remote -> client #${clientIdAndHost}] Error:`, err);
+        tsError(`[remote(${remoteName}) -> client #${clientIdAndHost}] Error:`, err);
         clientSocket.close(1011, 'Remote error');
     });
 });
@@ -264,6 +277,25 @@ server.listen(port, host, () => {
     console.log('[ws-proxy] bootstrapping heartbeat');
     startHeartbeat();
 });
+
+function closeAllTunnelsOnProviderChange() {
+    onProviderChange(({ previous, current, reason }) => {
+        tsLog(`[ws-proxy] Provider changed from ${previous} to ${current}${reason ? ` (${reason})` : ''}; closing ${activeTunnels.size} active tunnel(s)`);
+        for (const tunnel of Array.from(activeTunnels)) {
+            const { clientSocket, remoteSocket, remoteName, id } = tunnel;
+            try {
+                tsLog(`[ws-proxy] Closing tunnel ${id} bound to ${remoteName}`);
+                if (remoteSocket.readyState === WebSocket.OPEN) remoteSocket.close(1011, 'Provider switch');
+                if (clientSocket.readyState === WebSocket.OPEN) clientSocket.close(1011, 'Provider switch');
+            } catch (err) {
+                tsError(`[ws-proxy] Error closing tunnel ${id}:`, err);
+            }
+            activeTunnels.delete(tunnel);
+        }
+    });
+}
+
+closeAllTunnelsOnProviderChange();
 
 try {
     if (process.env.ENFORCE_AT_START === "TRUE") {

@@ -48,6 +48,7 @@ function advanceProvider(reason) {
     activeProviderIndex = (activeProviderIndex + 1) % providerConfigs.length;
     const next = getActiveConfig();
     console.log(`[ws-rpc] Switching provider from ${prev?.name} to ${next?.name}${reason ? ` (${reason})` : ''}`);
+    notifyProviderChange(prev?.name, next?.name, reason);
     return next;
 }
 
@@ -70,11 +71,24 @@ function setActiveProvider(identifier, reason = 'manual override') {
     }
     const previous = getActiveProviderName();
     activeProviderIndex = targetIndex;
-    console.log(`[ws-rpc] Provider manually set from ${previous} to ${getActiveProviderName()} (${reason})`);
-    return { ok: true, changed: previous !== getActiveProviderName(), provider: getActiveProviderName() };
+    const current = getActiveProviderName();
+    console.log(`[ws-rpc] Provider manually set from ${previous} to ${current} (${reason})`);
+    notifyProviderChange(previous, current, reason);
+    return { ok: true, changed: previous !== current, provider: current };
 }
 
 let heartbeatTimer = null;
+const changeListeners = new Set();
+
+function notifyProviderChange(previous, current, reason) {
+    for (const fn of changeListeners) {
+        try {
+            fn({ previous, current, reason });
+        } catch (err) {
+            console.log('[ws-rpc] Provider change listener error:', err?.message || err);
+        }
+    }
+}
 
 async function heartbeatOnce(timeoutMs = 4000) {
     const cfg = getActiveConfig();
@@ -129,6 +143,11 @@ function startHeartbeat(intervalMs = 10000, timeoutMs = 4000) {
     tick().catch((err) => console.log('[ws-rpc] Heartbeat initial check error:', err?.message || err));
 }
 
+function onProviderChange(listener) {
+    changeListeners.add(listener);
+    return () => changeListeners.delete(listener);
+}
+
 module.exports = {
     getActiveProviderUrl,
     getActiveProviderName,
@@ -136,4 +155,5 @@ module.exports = {
     setActiveProvider,
     startHeartbeat,
     getActiveConfig,
+    onProviderChange,
 };
