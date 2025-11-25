@@ -1,5 +1,6 @@
 require('dotenv').config();
 const shell = require('shelljs');
+const { getActiveProviderName, setActiveProvider } = require('../utils/wsProviderManager');
 
 // For timestamped logs
 function tsLog(...args) {
@@ -235,7 +236,31 @@ const prepopulateWhitelist = async (req, res) => {
     }
 }
 
-module.exports = { setRestrictedProxy, 
+const getActiveRpcProvider = (req, res) => {
+    try {
+        return res.status(200).json({ provider: getActiveProviderName() });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: error?.message || error });
+    }
+};
+
+const setActiveRpcProvider = (req, res) => {
+    try {
+        const { provider } = req.params;
+        const result = setActiveProvider(provider, 'manual override via /monitor route');
+        if (!result.ok) {
+            return res.status(400).json({ message: result.message, provider: result.provider });
+        }
+        return res.status(200).json({ provider: result.provider, changed: result.changed });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: error?.message || error });
+    }
+};
+
+module.exports = { 
+    setRestrictedProxy, 
     getRestrictedProxyStatus,
     prepopulateWhitelist, 
     addToWhitelist,
@@ -243,4 +268,7 @@ module.exports = { setRestrictedProxy,
     getErrors,
     getWhitelist,
     getUserConnectionsStatus, 
-    triggerReboot };
+    triggerReboot,
+    getActiveRpcProvider,
+    setActiveRpcProvider
+};

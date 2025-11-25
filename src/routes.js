@@ -15,6 +15,8 @@ routes.post('/monitor/set-restricted-proxy', localonly, proxyManagementControlle
 routes.get('/restricted-proxy-status', middlewareSecret, proxyManagementController.getRestrictedProxyStatus);
 routes.get('/monitor/restricted-proxy-status', localonly, proxyManagementController.getRestrictedProxyStatus);
 routes.post('/monitor/prepopulate-whitelist', localonly, proxyManagementController.prepopulateWhitelist);
+routes.get('/monitor/active-rpc-provider', localonly, proxyManagementController.getActiveRpcProvider);
+routes.put('/monitor/active-rpc-provider/:provider', localonly, proxyManagementController.setActiveRpcProvider);
 
 routes.post('/add-to-whitelist/:shortcode', middlewareSecret, proxyManagementController.addToWhitelist);
 routes.post('/monitor/add-to-whitelist/:shortcode', localonly, proxyManagementController.addToWhitelist);
