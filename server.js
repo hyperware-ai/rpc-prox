@@ -283,6 +283,7 @@ server.listen(port, host, () => {
 function closeAllTunnelsOnProviderChange() {
     onProviderChange(({ previous, current, reason }) => {
         tsLog(`[ws-proxy] Provider changed from ${previous} to ${current}${reason ? ` (${reason})` : ''}; closing ${activeTunnels.size} active tunnel(s)`);
+        shell.exec(`curl -X POST -H 'Content-Type: application/json' -d '{"file": "server (proxy)", "type": "info", "subject": "info (email notify)", "message": "Provider changed from ${previous} to ${current}${reason ? ` (${reason})` : ''}"}' ${process.env.BACKEND_URL}/raise-alarm`, { silent: true });
         for (const tunnel of Array.from(activeTunnels)) {
             const { clientSocket, remoteSocket, remoteName, id } = tunnel;
             try {
